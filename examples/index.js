@@ -8,8 +8,7 @@ var opts = {
 		'planeshifter',
 		'rgizz'
 	],
-	'useragent': 'beep-boop-bop',
-	'token': '<your_token_goes_here>'
+	'useragent': 'beep-boop-bop'
 };
 
 userinfo( opts, clbk );

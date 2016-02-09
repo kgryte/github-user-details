@@ -135,8 +135,7 @@ var opts = {
 		'planeshifter',
 		'rgizz'
 	],
-	'useragent': 'beep-boop-bop',
-	'token': 'tkjorjk34ek3nj4!'
+	'useragent': 'beep-boop-bop'
 };
 
 userinfo( opts, clbk );
@@ -157,8 +156,6 @@ To run the example code from the top-level application directory,
 ``` bash
 $ DEBUG=* node ./examples/index.js
 ```
-
-__Note__: in order to run the example, you will need to obtain an access [token][github-token] and modify the `token` option accordingly.
 
 
 ---
