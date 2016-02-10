@@ -80,7 +80,7 @@ tape( 'the function returns a JSON object upon attempting to resolve all specifi
 	}
 });
 
-tape( 'the returned JSON object has a `meta` field which contains meta data documenting how many packages were successfully resolved', function test( t ) {
+tape( 'the returned JSON object has a `meta` field which contains meta data documenting how many usernames were successfully resolved', function test( t ) {
 	var expected;
 	var opts;
 	var get;
