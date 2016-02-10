@@ -4,6 +4,8 @@
 
 var tape = require( 'tape' );
 var assert = require( 'chai' ).assert;
+var copy = require( 'utils-copy' );
+var round = require( 'math-round' );
 var proxyquire = require( 'proxyquire' );
 var get = require( './../lib/get.js' );
 
@@ -267,6 +269,223 @@ tape( 'the function resolves multiple users', function test( t ) {
 			t.ok( false, error.message );
 		} else {
 			assert.deepEqual( data, expected );
+			t.ok( true, 'deep equal' );
+		}
+		t.end();
+	}
+});
+
+tape( 'the function returns rate limit info upon attempting to resolve all specified usernames', function test( t ) {
+	var expected;
+	var count;
+	var opts;
+	var info;
+	var get;
+
+	get = proxyquire( './../lib/get.js', {
+		'@kgryte/github-get': request
+	});
+
+	opts = getOpts();
+	opts.usernames = [
+		'kgryte',
+		'planeshifter',
+		'unknown_username'
+	];
+
+	info = {
+		'limit': 5000,
+		'remaining': 5000,
+		'reset': round( Date.now()/1000 )
+	};
+
+	count = -1;
+
+	expected = {
+		'limit': info.limit,
+		'remaining': info.remaining-opts.usernames.length,
+		'reset': info.reset
+	};
+
+	get( opts, done );
+
+	function request( opts, clbk ) {
+		setTimeout( onTimeout, 0 );
+		function onTimeout() {
+			var ratelimit;
+			var err;
+			
+			count += 1;
+
+			info.remaining -= 1;
+			ratelimit = copy( info );
+
+			if ( count < 2 ) {
+				return clbk( null, data[ count ], ratelimit );
+			}
+			if ( count === 2 ) {
+				err = {
+					'status': 404,
+					'message': 'Not Found'
+				};
+				return clbk( err, null, ratelimit );
+			}
+		}
+	}
+
+	function done( error, data, ratelimit ) {
+		if ( error ) {
+			t.ok( false, error.message );
+		} else {
+			assert.deepEqual( ratelimit, expected );
+			t.ok( true, 'deep equal' );
+		}
+		t.end();
+	}
+});
+
+tape( 'the function handles out-of-order responses to return the most up-to-date rate limit info (number remaining)', function test( t ) {
+	var expected;
+	var count;
+	var opts;
+	var info;
+	var get;
+
+	get = proxyquire( './../lib/get.js', {
+		'@kgryte/github-get': request
+	});
+
+	opts = getOpts();
+	opts.usernames = [
+		'kgryte',
+		'planeshifter',
+		'unknown_username'
+	];
+
+	info = new Array( 3 );
+	info[ 0 ] = {
+		'limit': 5000,
+		'remaining': 4995,
+		'reset': round( Date.now()/1000 )
+	};
+	info[ 1 ] = {
+		'limit': info[ 0 ].limit,
+		'remaining': 4994,
+		'reset': info[ 0 ].reset
+	};
+	info[ 2 ] = {
+		'limit': info[ 0 ].limit,
+		'remaining': 4996,
+		'reset': info[ 0 ].reset
+	};
+
+	count = -1;
+
+	expected = {
+		'limit': info[ 0 ].limit,
+		'remaining': info[ 1 ].remaining,
+		'reset': info[ 0 ].reset
+	};
+
+	get( opts, done );
+
+	function request( opts, clbk ) {
+		setTimeout( onTimeout, 0 );
+		function onTimeout() {
+			var err;
+			count += 1;
+			if ( count < 2 ) {
+				return clbk( null, data[ count ], info[ count ] );
+			}
+			if ( count === 2 ) {
+				err = {
+					'status': 404,
+					'message': 'Not Found'
+				};
+				return clbk( err, null, info[ count ] );
+			}
+		}
+	}
+
+	function done( error, data, ratelimit ) {
+		if ( error ) {
+			t.ok( false, error.message );
+		} else {
+			assert.deepEqual( ratelimit, expected );
+			t.ok( true, 'deep equal' );
+		}
+		t.end();
+	}
+});
+
+tape( 'the function handles out-of-order responses to return the most up-to-date rate limit info (reset)', function test( t ) {
+	var expected;
+	var count;
+	var opts;
+	var info;
+	var get;
+
+	get = proxyquire( './../lib/get.js', {
+		'@kgryte/github-get': request
+	});
+
+	opts = getOpts();
+	opts.usernames = [
+		'kgryte',
+		'planeshifter',
+		'unknown_username'
+	];
+
+	info = new Array( 3 );
+	info[ 0 ] = {
+		'limit': 5000,
+		'remaining': 4995,
+		'reset': round( Date.now()/1000 )
+	};
+	info[ 1 ] = {
+		'limit': info[ 0 ].limit,
+		'remaining': 4994,
+		'reset': info[ 0 ].reset
+	};
+	info[ 2 ] = {
+		'limit': info[ 0 ].limit,
+		'remaining': 4999,
+		'reset': info[ 0 ].reset+(60*60*60)
+	};
+
+	count = -1;
+
+	expected = {
+		'limit': info[ 2 ].limit,
+		'remaining': info[ 2 ].remaining,
+		'reset': info[ 2 ].reset
+	};
+
+	get( opts, done );
+
+	function request( opts, clbk ) {
+		setTimeout( onTimeout, 0 );
+		function onTimeout() {
+			var err;
+			count += 1;
+			if ( count < 2 ) {
+				return clbk( null, data[ count ], info[ count ] );
+			}
+			if ( count === 2 ) {
+				err = {
+					'status': 404,
+					'message': 'Not Found'
+				};
+				return clbk( err, null, info[ count ] );
+			}
+		}
+	}
+
+	function done( error, data, ratelimit ) {
+		if ( error ) {
+			t.ok( false, error.message );
+		} else {
+			assert.deepEqual( ratelimit, expected );
 			t.ok( true, 'deep equal' );
 		}
 		t.end();
