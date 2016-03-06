@@ -106,7 +106,7 @@ function clbk( error, results, info ) {
 	if ( error ) {
 		process.stderr.write( error.message, 'utf8' );
 		process.stderr.write( '\n' );
-		return;
+		return process.exit( 1 );
 	}
 	len = Object.keys( results.data ).length;
 	if ( len ) {
