@@ -52,6 +52,36 @@ tape( 'function returns an error to a provided callback if an error is encounter
 	}
 });
 
+tape( 'function returns an error to a provided callback if an error is encountered when fetching user details (callback only called once)', function test( t ) {
+	var opts;
+	var get;
+
+	get = proxyquire( './../lib/get.js', {
+		'@kgryte/github-get': request
+	});
+
+	opts = getOpts();
+	opts.usernames.push( 'planeshifter' );
+
+	get( opts, done );
+
+	function request( opts, clbk ) {
+		setTimeout( onTimeout, 0 );
+		function onTimeout() {
+			clbk({
+				'status': 500,
+				'message': 'bad request'
+			});
+		}
+	}
+
+	function done( error ) {
+		t.equal( error.status, 500, 'equal status' );
+		t.equal( error.message, 'bad request', 'equal message' );
+		t.end();
+	}
+});
+
 tape( 'the function returns a JSON object upon attempting to resolve all specified usernames', function test( t ) {
 	var opts;
 	var get;
@@ -314,7 +344,7 @@ tape( 'the function returns rate limit info upon attempting to resolve all speci
 		function onTimeout() {
 			var ratelimit;
 			var err;
-			
+
 			count += 1;
 
 			info.remaining -= 1;
