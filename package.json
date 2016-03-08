@@ -1,6 +1,6 @@
 {
   "name": "github-user-details",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Get user details for one or more users.",
   "author": {
     "name": "Athan Reines",
